@@ -74,3 +74,48 @@
 ;;             (Arg 2)
 ;;         ))
 ;; )
+
+
+;; program:
+;; len = < known positive >
+;; for (i = 0; i < n; i++) {
+;;     if (0 <= i && i < len) {
+;;       do_something();
+;;     } else {
+;;       throw_out_of_bounds();
+;;     }
+;; }
+;;
+;; =>
+;; len = < known positive >
+;; limit = smin(n, len)
+;; // no first segment
+;; for (i = 0; i < limit; i++) {
+;;   if (0 <= i && i < len) { // this check is fully redundant
+;;     do_something();
+;;   } else {
+;;     throw_out_of_bounds();
+;;   }
+;; }
+;; for (i = limit; i < n; i++) {
+;;   if (0 <= i && i < len) {
+;;     do_something();
+;;   } else {
+;;     throw_out_of_bounds();
+;;   }
+;; }
+;;
+;;
+;; we recoginize:
+;; - gamma node with signed comparison, inner theta node with the same signed comparison
+;;   as its latch (this could possibly optional with smart analysis?)
+;; - theta node with traditional signed comparison, single step iteration, one child which is a
+;; - gamma node with comparison of induction variable to well known constant limit (will be optimized out)
+;; we rewrite to:
+;; - two theta nodes with identical bodies
+;; - one theta node goes from 0 to smin(n, len), the other from the last iter step to n
+;;
+
+(rewrite
+    (Gamma
+        (Theta)))
